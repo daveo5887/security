@@ -28,8 +28,8 @@ import logging
 import sys, os
 
 #logging.getLogger('openzwave').addHandler(logging.NullHandler())
+#logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
-#logging.basicConfig(level=logging.INFO)
 
 #logger = logging.getLogger('openzwave')
 
@@ -62,11 +62,11 @@ options = ZWaveOption(device, \
   config_path="/home/pi/workspace/open-zwave-control-panel/config", \
   user_path=".", cmd_line="--logging false")
 options.set_log_file("OZW_Log.log")
-options.set_append_log_file(False)
+options.set_append_log_file(True)
 options.set_console_output(True)
 options.set_save_log_level("Info")
 #options.set_save_log_level('Info')
-options.set_logging(False)
+options.set_logging(True)
 options.lock()
 
 #Create a network object
@@ -115,12 +115,9 @@ print "------------------------------------------------------------"
 print "Nodes in network : %s" % network.nodes_count
 print "------------------------------------------------------------"
 
-dispatcher.connect(louie_node_update, ZWaveNetwork.SIGNAL_NODE)
-dispatcher.connect(louie_value_update, ZWaveNetwork.SIGNAL_VALUE)
-dispatcher.connect(louie_ctrl_message, ZWaveController.SIGNAL_CONTROLLER)
-
 security_system = SecuritySystem(network)
 dispatcher.connect(security_system.handle_node_event, ZWaveNetwork.SIGNAL_NODE_EVENT)
+dispatcher.connect(security_system.handle_scene_event, ZWaveNetwork.SIGNAL_SCENE_EVENT)
 dispatcher.connect(security_system.louie_node_update, ZWaveNetwork.SIGNAL_NODE)
 dispatcher.connect(security_system.louie_value_update, ZWaveNetwork.SIGNAL_VALUE)
 dispatcher.connect(security_system.louie_ctrl_message, ZWaveController.SIGNAL_CONTROLLER)
