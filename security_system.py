@@ -20,7 +20,6 @@ class SecuritySystem:
   SIREN = 'SIREN'
 
   ALARM_ON_FILE = './alarm_on'
-  ALARM_HTML_FILE = './web/alarm.html'
 
   node_ids = {1 : {"name": "Controller", "type": CONTROLLER},
       255 : {'name': "OpenZWave System", 'type': SYSTEM},
@@ -71,7 +70,6 @@ class SecuritySystem:
     self.turn_sirens_off()
 
     open(self.ALARM_ON_FILE, 'w').write('true')
-    open(self.ALARM_HTML_FILE, 'w').write('Alarm is On')
 
     self.nodes_in_alarm.clear()
     for node_id, node_info in self.node_ids.iteritems():
@@ -91,7 +89,6 @@ class SecuritySystem:
     self.in_alarm_state = False
     self.alarm_on = False
     open(self.ALARM_ON_FILE, 'w').write('false')
-    open(self.ALARM_HTML_FILE, 'w').write('Alarm is Off')
 
   def turn_sirens_on(self):
     print "Turning sirens on"

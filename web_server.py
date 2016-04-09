@@ -2,8 +2,6 @@ import cherrypy
 
 class WebServer:
 
-  ALARM_HTML_FILE = './web/alarm.html'
-
   def __init__(self, security_system):
     self.security_system = security_system
     cherrypy.config.update({'server.socket_host': '0.0.0.0', 'server.socket_port': 9000})
