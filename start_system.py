@@ -31,7 +31,7 @@ import sys, os
 #logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
 
-#logger = logging.getLogger('openzwave')
+logger = logging.getLogger('openzwave')
 
 import openzwave
 from security_system import SecuritySystem
@@ -58,8 +58,11 @@ for arg in sys.argv:
         print("  --log=Info|Debug")
 
 #Define some manager options
+#options = ZWaveOption(device, \
+    #  config_path="/home/pi/workspace/open-zwave-control-panel/config", \
+    #  user_path=".", cmd_line="")
 options = ZWaveOption(device, \
-  config_path="/home/pi/workspace/open-zwave-control-panel/config", \
+  config_path="/home/pi/workspace/open-zwave/config", \
   user_path=".", cmd_line="--logging false")
 options.set_log_file("OZW_Log.log")
 options.set_append_log_file(True)
