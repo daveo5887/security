@@ -6,7 +6,7 @@ from openzwave.controller import ZWaveController
 from openzwave.network import ZWaveNetwork
 from openzwave.option import ZWaveOption
 import time
-from send_mail import send_mail
+from send_mail import send_mail, send_tamper_mail
 from louie import dispatcher, All
 from threading import Timer,Thread
 from web_server import WebServer
@@ -14,6 +14,7 @@ from web_server import WebServer
 class SecuritySystem:
 
   SENSOR = 'sensor'
+  SENSOR_2 = 'sensor_2'
   GLASS_BREAK = 'glass_break'
   CONTROLLER = 'controller'
   SYSTEM = 'system'
@@ -24,16 +25,18 @@ class SecuritySystem:
   node_ids = {1 : {"name": "Controller", "type": CONTROLLER},
       255 : {'name': "OpenZWave System", 'type': SYSTEM},
       3 : {'name': "Living Room Right Window", 'type': SENSOR},
-      4 : {'name': "Living Room Middle Window", 'type': SENSOR},
+      27 : {'name': "Living Room Middle Window", 'type': SENSOR_2},
+      25 : {'name': "Living Room Left Window", 'type': SENSOR},
       5 : {'name': "Front Door", 'type': SENSOR},
-      7 : {'name': '2nd Bedroom Window', 'type': SENSOR},
+      24 : {'name': '2nd Bedroom Window', 'type': SENSOR_2},
       12 : {'name': '2nd Bedroom Glass Break', 'type': GLASS_BREAK},
       13 : {'name': 'Bedroom Glass Break', 'type': GLASS_BREAK},
       14 : {'name': 'Living Room Glass Break', 'type': GLASS_BREAK},
       15 : {'name': 'Living Room Siren', 'type': SIREN},
       17 : {'name': 'Hallway Siren', 'type': SIREN},
       18 : {'name': 'Bedroom Siren', 'type': SIREN},
-      19 : {'name': 'Bedroom Window', 'type': SENSOR}
+      19 : {'name': 'Bedroom Window', 'type': SENSOR},
+      20 : {'name': "Living Room Cat Tower Window", 'type': SENSOR}
       }
 
   nodes_in_alarm = set()
@@ -51,6 +54,8 @@ class SecuritySystem:
   def run(self):
     self.web_server_thread = Thread(target=self.web_server.start)
     self.web_server_thread.start()
+    for key, value in self.network.nodes[24].get_sensors().iteritems():
+      print value.to_dict()
     try:
       while not self.done:
         time.sleep(1)
@@ -73,11 +78,13 @@ class SecuritySystem:
 
     self.nodes_in_alarm.clear()
     for node_id, node_info in self.node_ids.iteritems():
-      if node_info['type'] == self.SENSOR:
+      if node_info['type'] == self.SENSOR or node_info['type'] == self.SENSOR_2:
         if not self.network.nodes[node_id].get_values_by_command_classes()[48].values()[0].data:
           self.nodes_in_alarm.add(node_id)
       elif node_info['type'] == self.GLASS_BREAK:
         self.nodes_in_alarm.add(node_id)
+
+
     print "Nodes in alarm: " + str(self.nodes_in_alarm)
 
 
@@ -108,8 +115,8 @@ class SecuritySystem:
       self.in_alarm_state = True
       self.turn_sirens_on()
       send_mail(self.node_ids[node.node_id]['name'])
-    elif self.node_ids[node.node_id]['type'] != self.SENSOR:
-      print('Louie signal : Node event : {0}. value: {1}'.format(node, value))
+    #elif self.node_ids[node.node_id]['type'] != self.SENSOR:
+    print('Louie signal : Node event : {0}. value: {1}'.format(node, value))
 
   def handle_scene_event(self, network, node, scene_id):
     if scene_id == 1:
@@ -129,6 +136,14 @@ class SecuritySystem:
       self.in_alarm_state = True
       self.turn_sirens_on()
       send_mail(self.node_ids[node.node_id]['name'])
+    elif self.alarm_on and not self.in_alarm_state and node.node_id in self.nodes_in_alarm and self.node_ids[node.node_id]['type'] == self.SENSOR_2 and value.data == True:
+      self.in_alarm_state = True
+      self.turn_sirens_on()
+      send_mail(self.node_ids[node.node_id]['name'])
+    elif self.node_ids[node.node_id] == self.SENSOR:
+      if value.label == "Alarm Level" and value.data == 255:
+        send_tamper_mail(self.node_ids[node.node_id]['name'])
+
     print('Louie signal : Value update : %s.' % value)
 
   def louie_ctrl_message(self, state, message, network, controller):
