@@ -6,6 +6,7 @@ from openzwave.controller import ZWaveController
 from openzwave.network import ZWaveNetwork
 from openzwave.option import ZWaveOption
 import time
+import datetime
 from send_mail import send_mail, send_tamper_mail
 from louie import dispatcher, All
 from threading import Timer,Thread
@@ -24,10 +25,10 @@ class SecuritySystem:
 
   node_ids = {1 : {"name": "Controller", "type": CONTROLLER},
       255 : {'name': "OpenZWave System", 'type': SYSTEM},
-      3 : {'name': "Living Room Right Window", 'type': SENSOR},
+      3 : {'name': "Front Door", 'type': SENSOR},
       27 : {'name': "Living Room Middle Window", 'type': SENSOR_2},
-      25 : {'name': "Living Room Left Window", 'type': SENSOR},
-      5 : {'name': "Front Door", 'type': SENSOR},
+      25 : {'name': "Back Door", 'type': SENSOR},
+      5 : {'name': "?", 'type': SENSOR},
       24 : {'name': '2nd Bedroom Window', 'type': SENSOR_2},
       12 : {'name': '2nd Bedroom Glass Break', 'type': GLASS_BREAK},
       13 : {'name': 'Bedroom Glass Break', 'type': GLASS_BREAK},
@@ -116,7 +117,7 @@ class SecuritySystem:
       self.turn_sirens_on()
       send_mail(self.node_ids[node.node_id]['name'])
     #elif self.node_ids[node.node_id]['type'] != self.SENSOR:
-    print('Louie signal : Node event : {0}. value: {1}'.format(node, value))
+    print('{0} - Louie signal : Node event : {1}. value: {2}'.format(str(datetime.datetime.now()), node, value))
 
   def handle_scene_event(self, network, node, scene_id):
     if scene_id == 1:
