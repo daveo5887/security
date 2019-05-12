@@ -20,6 +20,7 @@ class SecuritySystem:
   CONTROLLER = 'controller'
   SYSTEM = 'system'
   SIREN = 'SIREN'
+  SHOCK = 'SHOCK'
 
   ALARM_ON_FILE = './alarm_on'
 
@@ -37,7 +38,9 @@ class SecuritySystem:
       17 : {'name': 'Hallway Siren', 'type': SIREN},
       18 : {'name': 'Bedroom Siren', 'type': SIREN},
       19 : {'name': 'Bedroom Window', 'type': SENSOR},
-      20 : {'name': "Living Room Cat Tower Window", 'type': SENSOR}
+      20 : {'name': "Living Room Cat Tower Window", 'type': SENSOR},
+      28 : {'name': "Back Window Shock Detector", 'type': SHOCK},
+      29 : {'name': "Back Door Shock Detector", 'type': SHOCK}
       }
 
   nodes_in_alarm = set()
@@ -116,7 +119,10 @@ class SecuritySystem:
       self.in_alarm_state = True
       self.turn_sirens_on()
       send_mail(self.node_ids[node.node_id]['name'])
-    #elif self.node_ids[node.node_id]['type'] != self.SENSOR:
+    elif self.alarm_on and not self.in_alarm_state and self.node_ids[node.node_id]['type'] == self.SHOCK and value > 0:
+      self.in_alarm_state = True
+      self.turn_sirens_on()
+      send_mail(self.node_ids[node.node_id]['name'])
     print('{0} - Louie signal : Node event : {1}. value: {2}'.format(str(datetime.datetime.now()), node, value))
 
   def handle_scene_event(self, network, node, scene_id):
