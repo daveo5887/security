@@ -25,22 +25,22 @@ class SecuritySystem:
   ALARM_ON_FILE = './alarm_on'
 
   node_ids = {1 : {"name": "Controller", "type": CONTROLLER},
-      255 : {'name': "OpenZWave System", 'type': SYSTEM},
-      3 : {'name': "Front Door", 'type': SENSOR},
-      27 : {'name': "Living Room Middle Window", 'type': SENSOR_2},
-      25 : {'name': "Back Door", 'type': SENSOR},
-      5 : {'name': "?", 'type': SENSOR},
-      24 : {'name': '2nd Bedroom Window', 'type': SENSOR_2},
-      12 : {'name': '2nd Bedroom Glass Break', 'type': GLASS_BREAK},
-      13 : {'name': 'Bedroom Glass Break', 'type': GLASS_BREAK},
-      14 : {'name': 'Living Room Glass Break', 'type': GLASS_BREAK},
-      15 : {'name': 'Living Room Siren', 'type': SIREN},
-      17 : {'name': 'Hallway Siren', 'type': SIREN},
-      18 : {'name': 'Bedroom Siren', 'type': SIREN},
-      19 : {'name': 'Bedroom Window', 'type': SENSOR},
-      20 : {'name': "Living Room Cat Tower Window", 'type': SENSOR},
-      28 : {'name': "Back Window Shock Detector", 'type': SHOCK},
-      29 : {'name': "Back Door Shock Detector", 'type': SHOCK}
+              5 : {'name': "Front Door", 'type': SENSOR},
+              6 : {'name': "Back Door", 'type': SENSOR},
+              255 : {'name': "OpenZWave System", 'type': SYSTEM},
+              7 : {'name': "Laundry Room Window", 'type': SENSOR},
+              8 : {'name': 'Office Small Window', 'type': SENSOR_2},
+              13 : {'name': 'Entryway Siren', 'type': SIREN},
+              14 : {'name': 'Living Room Siren', 'type': SIREN},
+              15 : {'name': 'Bedroom Siren', 'type': SIREN},
+              3 : {'name': 'Dining Room Window', 'type': SENSOR},
+              9 : {'name': "Office Big Window", 'type': SENSOR},
+#             28 : {'name': "Back Window Shock Detector", 'type': SHOCK},
+#             29 : {'name': "Back Door Shock Detector", 'type': SHOCK},
+              11 : {'name': "Master Bedroom Window", 'type': SENSOR_2},
+              12 : {'name': "Second Bedroom Window", 'type': SENSOR},
+              4 : {'name': "Living Room Right Window", 'type': SENSOR_2},
+              10 : {'name': "Living Room Left Window", 'type': SENSOR_2}
       }
 
   nodes_in_alarm = set()
@@ -58,8 +58,6 @@ class SecuritySystem:
   def run(self):
     self.web_server_thread = Thread(target=self.web_server.start)
     self.web_server_thread.start()
-    for key, value in self.network.nodes[24].get_sensors().iteritems():
-      print value.to_dict()
     try:
       while not self.done:
         time.sleep(1)
@@ -103,18 +101,19 @@ class SecuritySystem:
 
   def turn_sirens_on(self):
     print "Turning sirens on"
+    self.network.nodes[13].set_switch(72057594260832256, True)
+    self.network.nodes[14].set_switch(72057594277609472, True)
     self.network.nodes[15].set_switch(72057594294386688, True)
-    self.network.nodes[17].set_switch(72057594327941120, True)
-    self.network.nodes[18].set_switch(72057594344718336, True)
     Timer(30.0, self.turn_sirens_off).start()
 
   def turn_sirens_off(self):
     print "Turning sirens off"
+    self.network.nodes[13].set_switch(72057594260832256, False)
+    self.network.nodes[14].set_switch(72057594277609472, False)
     self.network.nodes[15].set_switch(72057594294386688, False)
-    self.network.nodes[17].set_switch(72057594327941120, False)
-    self.network.nodes[18].set_switch(72057594344718336, False)
 
   def handle_node_event(self, network, node, value):
+    print('{0} - Louie signal : Node event : {1}. value: {2}'.format(str(datetime.datetime.now()), node, value))
     if self.alarm_on and not self.in_alarm_state and node.node_id in self.nodes_in_alarm and self.node_ids[node.node_id]['type'] == self.SENSOR and value > 0:
       self.in_alarm_state = True
       self.turn_sirens_on()
@@ -123,7 +122,6 @@ class SecuritySystem:
       self.in_alarm_state = True
       self.turn_sirens_on()
       send_mail(self.node_ids[node.node_id]['name'])
-    print('{0} - Louie signal : Node event : {1}. value: {2}'.format(str(datetime.datetime.now()), node, value))
 
   def handle_scene_event(self, network, node, scene_id):
     if scene_id == 1:
@@ -139,6 +137,7 @@ class SecuritySystem:
       print('Louie signal : Node update : %s.' % node)
 
   def louie_value_update(self, network, node, value):
+    print('Louie signal : Value update : %s.' % value)
     if self.alarm_on and not self.in_alarm_state and node.node_id in self.nodes_in_alarm and self.node_ids[node.node_id]['type'] == self.GLASS_BREAK and value.label=='General' and value.data == 255:
       self.in_alarm_state = True
       self.turn_sirens_on()
@@ -151,7 +150,6 @@ class SecuritySystem:
       if value.label == "Alarm Level" and value.data == 255:
         send_tamper_mail(self.node_ids[node.node_id]['name'])
 
-    print('Louie signal : Value update : %s.' % value)
 
   def louie_ctrl_message(self, state, message, network, controller):
       print('Louie signal : Controller message : %s.' % message)

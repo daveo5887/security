@@ -62,12 +62,13 @@ for arg in sys.argv:
     #  config_path="/home/pi/workspace/open-zwave-control-panel/config", \
     #  user_path=".", cmd_line="")
 options = ZWaveOption(device, \
-  config_path="/home/pi/workspace/open-zwave/config", \
+ config_path="/home/pi/workspace/open-zwave/config", \
   user_path=".", cmd_line="--logging false")
 options.set_log_file("OZW_Log.log")
 options.set_append_log_file(True)
 options.set_console_output(True)
-options.set_save_log_level("Info")
+options.set_save_log_level("Debug")
+options.set_save_configuration(False)
 #options.set_save_log_level('Info')
 options.set_logging(True)
 options.lock()
@@ -122,7 +123,7 @@ security_system = SecuritySystem(network)
 dispatcher.connect(security_system.handle_node_event, ZWaveNetwork.SIGNAL_NODE_EVENT)
 dispatcher.connect(security_system.handle_scene_event, ZWaveNetwork.SIGNAL_SCENE_EVENT)
 dispatcher.connect(security_system.louie_node_update, ZWaveNetwork.SIGNAL_NODE)
-dispatcher.connect(security_system.louie_value_update, ZWaveNetwork.SIGNAL_VALUE)
+dispatcher.connect(security_system.louie_value_update, ZWaveNetwork.SIGNAL_VALUE_CHANGED)
 dispatcher.connect(security_system.louie_ctrl_message, ZWaveController.SIGNAL_CONTROLLER)
 
 try:
