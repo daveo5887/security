@@ -46,3 +46,26 @@ def send_tamper_mail(node_name):
   server.login(username,password)
   server.sendmail(fromaddr, toaddrs, msg)
   server.quit()
+
+def send_smoke_alarm_mail(node_name, alarm_type): 
+  fromaddr = 'daveochromebox@gmail.com'
+  toaddrs  = ['daveo5887@gmail.com', 'ssterli2@gmail.com']
+  current_time = time.strftime("%d/%m/%Y %H:%M:%S")
+  message = alarm_type + " alarm in " + node_name + " is going off"
+
+  msg = "\r\n".join([
+        "From: daveochromebox@gmail.com",
+        "To: daveo5887@gmail.com,ssterli2@gmail.com",
+        "Subject: " + alarm_type + " Alarm Alerting",
+        "",
+        message
+        ])
+
+  username = 'daveochromebox@gmail.com'
+  password = 'Gadzook123'
+  server = smtplib.SMTP('smtp.gmail.com:587')
+  server.ehlo()
+  server.starttls()
+  server.login(username,password)
+  server.sendmail(fromaddr, toaddrs, msg)
+  server.quit()

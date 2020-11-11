@@ -7,7 +7,7 @@ from openzwave.network import ZWaveNetwork
 from openzwave.option import ZWaveOption
 import time
 import datetime
-from send_mail import send_mail, send_tamper_mail
+from send_mail import send_mail, send_tamper_mail, send_smoke_alarm_mail
 from louie import dispatcher, All
 from threading import Timer,Thread
 from web_server import WebServer
@@ -21,6 +21,8 @@ class SecuritySystem:
   SYSTEM = 'system'
   SIREN = 'SIREN'
   SHOCK = 'SHOCK'
+  SMOKE_ALARM = 'SMOKE_ALARM'
+  SMOKE_ALARM_STATES = {1: 'Smoke', 2: 'CO', 12: 'Test', 13: 'idle'}
 
   ALARM_ON_FILE = './alarm_on'
 
@@ -40,7 +42,20 @@ class SecuritySystem:
               11 : {'name': "Master Bedroom Window", 'type': SENSOR_2},
               12 : {'name': "Second Bedroom Window", 'type': SENSOR},
               4 : {'name': "Living Room Right Window", 'type': SENSOR_2},
-              10 : {'name': "Living Room Left Window", 'type': SENSOR_2}
+              10 : {'name': "Living Room Left Window", 'type': SENSOR_2},
+              16 : {'name': "Bedroom Smoke Alarm", 'type': SMOKE_ALARM, 'state': 'idle'},
+              17 : {'name': "Entryway Smoke Alarm", 'type': SMOKE_ALARM, 'state': 'idle'},
+              18 : {'name': "Office Smoke Alarm", 'type': SMOKE_ALARM, 'state': 'idle'},
+              19 : {'name': "Living Room Smoke Alarm", 'type': SMOKE_ALARM, 'state': 'idle'},
+              20 : {'name': "Second Bedroom Smoke Alarm", 'type': SMOKE_ALARM, 'state': 'idle'},
+              21 : {'name': "Office Desk Window Break", 'type': SHOCK},
+              22 : {'name': "Office Breaker Window Break", 'type': SHOCK},
+              23 : {'name': "Dining Room Window Break", 'type': SHOCK},
+              24 : {'name': "Living Room Window Break", 'type': SHOCK},
+              25 : {'name': "Second Bedroom Window Break", 'type': SHOCK},
+              26 : {'name': "Primary Bedroom Window Break", 'type': SHOCK},
+              27 : {'name': "Front Bathroom Window Break", 'type': SHOCK},
+              28 : {'name': "Kitchen Window Break", 'type': SHOCK}
       }
 
   nodes_in_alarm = set()
@@ -112,6 +127,11 @@ class SecuritySystem:
     self.network.nodes[14].set_switch(72057594277609472, False)
     self.network.nodes[15].set_switch(72057594294386688, False)
 
+  def handle_smoke_alarm(self, node):
+    alarm_type = self.node_ids[node.node_id]['state']
+    print "Smoke alarm went off: " + alarm_type
+    send_smoke_alarm_mail(self.node_ids[node.node_id]['name'], alarm_type)
+
   def handle_node_event(self, network, node, value):
     print('{0} - Louie signal : Node event : {1}. value: {2}'.format(str(datetime.datetime.now()), node, value))
     if self.alarm_on and not self.in_alarm_state and node.node_id in self.nodes_in_alarm and self.node_ids[node.node_id]['type'] == self.SENSOR and value > 0:
@@ -146,9 +166,14 @@ class SecuritySystem:
       self.in_alarm_state = True
       self.turn_sirens_on()
       send_mail(self.node_ids[node.node_id]['name'])
-    elif self.node_ids[node.node_id] == self.SENSOR:
+    elif self.node_ids[node.node_id]['type'] == self.SENSOR:
       if value.label == "Alarm Level" and value.data == 255:
         send_tamper_mail(self.node_ids[node.node_id]['name'])
+    elif self.node_ids[node.node_id]['type'] == self.SMOKE_ALARM:
+      if value.label == "Alarm Type":
+        self.node_ids[node.node_id]['state'] = self.SMOKE_ALARM_STATES[value.data]
+      if self.node_ids[node.node_id]['state'] in ['Smoke', 'CO', 'Test'] and value.label == "Alarm Level" and value.data == 255:
+        self.handle_smoke_alarm(node)
 
 
   def louie_ctrl_message(self, state, message, network, controller):
